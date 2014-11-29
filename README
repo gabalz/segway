@@ -1,10 +1,10 @@
 
 A robot segway simulator with OpenGL visualization.
 
-The first version of the simulator was developed by Gabor Balazs
+The simulator was created by Gabor Balazs (http://webdocs.cs.ualberta.ca/~gbalazs/)
 during the experimental robotics course of Csaba Szepesvari in 2011-2012.
 The goal of the course was to teach system identification, control and
-localization by particle filtering based on known maps.
+robot localization by particle filtering based on known maps.
 
 In the simulator, one can control a robot segway on a flat terrain.
 The robot's design is based on the HiTechnic HTWay robot
