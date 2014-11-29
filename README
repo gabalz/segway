@@ -1,4 +1,37 @@
 
+A robot segway simulator with OpenGL visualization.
+
+The first version of the simulator was developed by Gabor Balazs
+during the experimental robotics course of Csaba Szepesvari in 2011-2012.
+The goal of the course was to teach system identification, control and
+localization by particle filtering based on known maps.
+
+In the simulator, one can control a robot segway on a flat terrain.
+The robot's design is based on the HiTechnic HTWay robot
+(http://www.hitechnic.com/blog/gyro-sensor/htway/).
+The robot is equipped with a rate gyroscope, 2 DC motors and 3 IR sensors.
+
+The code provides a slightly modified version of the HTWay controller
+and an adaptive particle filter for localization
+(D. Fox: KLD-Sampling: Adaptive Particle Filters, 2001).
+
+The controllers are split to robot and PC parts, where the robot part deals
+with critical and computationally cheap tasks (PID control, transmitting
+sensor readings) and the PC part performs higher level operations (particle
+filtering, user input, visualization). So the code can be easily transferred
+to a real HTWay type real robot. Videos about such a real robot (using the
+same visualization as the simulator) can be found here:
+
+    https://www.youtube.com/user/CsSzepi/videos (segway loc 1/2/3)
+
+The particle filter initially scans a grid over the map for all robot
+orientations (the robot is assumed to stand close to vertical at start)
+and initializes the particle cloud by the 10,000 most likely findings
+("Searching..." phase). The 3 plots at the bottom of the screen show the
+IR sensor readings (green) and the filter's estimate (red).
+
+-------------------------------------------------------------------------------
+
 Using a non-default java:
 
     Just simply set the JAVA_HOME variable.
