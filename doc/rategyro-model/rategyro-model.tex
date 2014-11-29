@@ -1,0 +1,129 @@
+\documentclass[a4paper]{article}
+\usepackage[top=35mm,left=3cm,right=3cm]{geometry}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage{verbatim}
+\usepackage[colorlinks=true,
+            linkcolor=blue,
+            citecolor=blue,
+            urlcolor=blue]{hyperref}
+
+\newcommand{\todo}[1]{\textcolor{red}{\begin{center}TODO : #1\end{center}}}
+\newcommand{\selfref}[1]{\href{#1}{#1}}
+\setlength{\parindent}{0cm} % no indentation
+
+\begin{document}
+
+\title{Rate Gyro Model}
+\maketitle
+
+\section{Dynamics}
+
+The dynamics of a rate gyroscope  takes the
+form\footnote{A. Lawrence, Modern Inertial Technoogy:
+              Navigation, Guidance, and Control (2nd edition),
+              Mechanical Engineering Series, 1998,
+              Chapter 7, Rate Gyro Dynamics (page 100)}
+\begin{equation}
+\label{eq:dyn:gyro}
+    I_a \ddot{\theta} + c \dot{\theta} + K_{tb} \theta = H \omega,
+\end{equation}
+where $\theta$ is the gimbal angle, $\omega$ is the input angular velocity,
+$H$ is the wheel angular momentum, $I_a$ is the gimbal moment of inertia about
+the output axis (OA), $c$ is the damping constant about the OA and $K_{tb}$ is
+the torsion bar spring constant. The output of the gyro is
+\begin{equation}
+\label{eq:gyr:output}
+    \hat{y} = \theta K_{po} + B,
+\end{equation}
+where $K_{po}$ is the pickoff sensitivity and $B$ is the measurement bias.
+The idea of a rate gyroscope is that by measuring $\hat{y}$ one can get 
+information about $\omega$. \\
+
+Assume that the value of the bias $B$ is known
+and consider the debiased gyro output $y = \hat{y} - B$.
+Clearly, ${y}$ satisfies a differential equation similar to $\theta$:
+\begin{eqnarray*}
+    {y} &=& K_{po}\theta ,\\
+    \dot{{y}} &=& K_{po} \dot{\theta},\\
+    \ddot{{y}} &=& K_{po} \ddot{\theta} = \frac{K_{po}}{I_a} 
+    (H\omega - c\dot{\theta} - K_{tb}\theta) 
+    = \frac{K_{po}}{I_a} \left(H\omega - \frac{c}{K_{po}} 
+      \dot{{y}} - \frac{K_{tb}}{K_{po}} y \right),
+\end{eqnarray*}
+or
+\begin{equation}
+\label{eq:gyro:harm1}
+    \ddot{{y}} + \frac{c}{I_a} \dot{{y}} + \frac{K_{tb}}{I_a} {y} 
+    = \frac{H K_{po}}{I_a} \omega \,.
+\end{equation}
+If the gyroscope is well-designed, its dynamics will be critically damped with 
+a gain close to $1$. This will make $y$ converge quickly to $\omega$ (more 
+precisely, $y(t)-\omega(t)\rightarrow 0$, $t\rightarrow 0$ when $\omega$ 
+changes slowly or is constant). \\
+
+By introducing 
+$a_1 = c/I_a$, $a_2 = K_{tb}/I_a$, $b_1 = H/(I_aK_{po})$,
+we can rewrite~\eqref{eq:gyro:harm1} in the ``standard'' form
+\begin{equation}
+\label{eq:out:gyro}
+    \ddot{y} + a_1 \dot{y} + a_2 y = b_1 \dot{u}\,.
+\end{equation}
+Here we also introduced $\dot{u} = \omega$, which is meant to emphasize that 
+the quantity to be estimated is the angular displacement $u$ instead of the 
+angular velocity ($\omega$). Now, the right-hand side is critically damped 
+with a gain of $1$ if the following holds:
+\begin{equation}
+\label{eq:cd}
+\begin{split}
+    \textrm{gain} = \frac{b_1}{a_2} = 1 
+    \quad , \quad
+    D = a_1^2 - 4 a_2 = 0 .
+\end{split}    
+\end{equation}
+Thus, if we are interested in estimating the parameters, we only need to 
+estimate one parameter as the others can then be determined from~\eqref{eq:cd}.
+
+\section{Simulation}
+
+The behavior of the gyro is given by the ODE described by \eqref{eq:out:gyro}
+with the initial condition $y(t_0) = y_0$, $\dot{y}(t_0) = \dot{y}_0$,
+were $y_0,\dot{y}_0$ are the known initial conditions (usually, they would be
+$(0,0)$, assuming a resting robot). \\
+
+In order to simulate this ODE, we first transform it to a (multi-dimensional)
+first order ODE. Second, we will need to deal with the issue that 
+the angular velocity ($\dot{u}$) is not available, just the angles ($u$). \\
+ 
+To deal with this second issue, we integrate 
+($\ref{eq:out:gyro}$) respect to the time and get
+\begin{equation}
+    \dot{y} + a_1 y + a_2 \int y = b_1 u .
+\end{equation}
+Next, by introducing  $w_1 = \int y$ and $w_2 = y$, we  rewrite this system as:
+\begin{equation} \begin{split}
+    \dot{w}_1 &= w_2\,, \\
+    \dot{w}_2 &= - a_1 w_2 - a_2 w_1 + b_1 u\,,
+\end{split} \end{equation}
+where $w_1(t_0) = w_2(t_0) = 0$. This can be further transformed into the
+\begin{equation}
+    \dot{w} = E w + F u
+\end{equation}
+first order ODE form, where $w = [w_1,w_2]^T$ and
+\begin{equation}
+    E = \left[ \begin{array}{cc}
+            0 & 1 \\
+            -a_2 & -a_1
+        \end{array} \right]
+        \quad , \quad
+        F = 
+        \left[ \begin{array}{c}
+            0 \\
+            b_1
+        \end{array} \right] .
+\end{equation}
+
+\end{document}
+
