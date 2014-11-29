@@ -1,0 +1,98 @@
+<project name="RobotSegway" default="compile" basedir=".">
+    <property name="src" location="src"/>
+    <property name="bin" location="bin"/>
+
+    <!-- set these properties appropriately -->
+    <property name="lwjgl" location="lib/lwjgl-2.9.1"/>
+    <property name="os" value="linux"/>
+
+    <presetdef name="javac">
+        <javac includeantruntime="false" />
+    </presetdef>
+
+    <!-- compilation targets -->
+
+    <target name="vecmat" description="Compile the vecmat package.">
+        <javac srcdir="${src}/vecmat" destdir="${bin}"/>
+    </target>
+
+    <target name="geom2d" description="Compile the geom2d package.">
+        <javac srcdir="${src}/geom2d" destdir="${bin}"/>
+    </target>
+
+    <target name="geom3d" description="Compile the geom3d package.">
+        <javac srcdir="${src}/geom3d" destdir="${bin}"/>
+    </target>
+
+    <target name="segway-share" description="Compile the segway-share package."
+        depends="vecmat,geom2d,geom3d">
+        <mkdir dir="${bin}/segway-share"/>
+        <javac srcdir="${src}/segway-share" destdir="${bin}/segway-share">
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <pathelement location="${bin}"/>
+                <pathelement location="${lwjgl}/jar/lwjgl.jar"/>
+                <pathelement location="${lwjgl}/jar/lwjgl_util.jar"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="segway-sim" description="Compile the segway-sim package."
+        depends="segway-share">
+        <mkdir dir="${bin}/segway-sim"/>
+        <javac srcdir="${src}/segway-sim" destdir="${bin}/segway-sim">
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <pathelement location="${bin}"/>
+                <pathelement location="${bin}/segway-share"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="compile" description="Compile everything."
+        depends="segway-sim">
+    </target>
+
+    <target name="clean" description="Delete class files.">
+        <delete dir="${bin}/vecmat"/>
+        <delete dir="${bin}/geom2d"/>
+        <delete dir="${bin}/geom3d"/>
+        <delete dir="${bin}/segway-share"/>
+        <delete dir="${bin}/segway-sim"/>
+    </target>
+
+    <!-- java task targets -->
+
+    <target name="drive" description="Remote control a segway robot."
+        depends="compile">
+        <java classname="SegwaySim" fork="true">
+            <arg value="cfg/run-drive.cfg"/>
+            <jvmarg value="-Djava.library.path=${lwjgl}/native/${os}"/>
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <pathelement location="${bin}"/>
+                <pathelement location="${bin}/segway-share"/>
+                <pathelement location="${bin}/segway-sim"/>
+                <pathelement location="${lwjgl}/jar/lwjgl.jar"/>
+                <pathelement location="${lwjgl}/jar/lwjgl_util.jar"/>
+            </classpath>
+        </java>
+    </target>
+
+    <target name="localize" description="Localization of a segway robot."
+        depends="compile">
+        <java classname="SegwaySim" fork="true">
+            <arg value="cfg/run-localize.cfg"/>
+            <jvmarg value="-Djava.library.path=${lwjgl}/native/${os}"/>
+            <classpath>
+                <pathelement path="${classpath}"/>
+                <pathelement location="${bin}"/>
+                <pathelement location="${bin}/segway-share"/>
+                <pathelement location="${bin}/segway-sim"/>
+                <pathelement location="${lwjgl}/jar/lwjgl.jar"/>
+                <pathelement location="${lwjgl}/jar/lwjgl_util.jar"/>
+            </classpath>
+        </java>
+    </target>
+
+</project>

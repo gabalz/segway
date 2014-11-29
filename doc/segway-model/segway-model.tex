@@ -1,0 +1,647 @@
+\documentclass[a4paper]{article}
+\usepackage[top=2cm,left=2cm,right=2cm]{geometry}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage[svgnames]{xcolor}
+\usepackage[colorlinks=true,
+            linkcolor=blue,
+            citecolor=blue,
+            urlcolor=blue]{hyperref}
+\usepackage{todonotes}
+
+\newcommand{\R}{\mathbb{R}} % set of real numbers
+\newcommand{\enorm}[1]{\lVert#1\rVert_2} % Euclidean norm
+
+\renewcommand{\vec}[1]{\mathbf{#1}} % vector
+\newcommand{\vx}{\vec{x}}
+\newcommand{\vp}{\vec{p}}
+\newcommand{\vv}{\vec{v}}
+
+\newcommand{\hH}{\widehat{H}}
+\newcommand{\hh}{\widehat{h}}
+\newcommand{\hf}{\widehat{f}}
+\newcommand{\hG}{\widehat{G}}
+
+\newcommand{\I}{\textbf{I}} % identity matrix
+\newcommand{\Z}{\vec{0}} % zero matrix
+
+\newcommand{\pitch}{\psi}
+\newcommand{\yaw}{\phi}
+\newcommand{\roll}{\theta}
+
+%------------------------------------------------------------------------------
+
+\begin{document}
+
+\title{Segway Model}
+\maketitle
+
+\section{Parameters and notation}
+
+Our notation is similar to \cite{nxtway-gs}.
+\begin{center}
+\begin{tabular}{l@{\ =\ }c@{\quad:\quad}l}
+    $g$ & $9.80665$ & gravitational acceleration ($m/s^2$) \\
+    \hline
+    $m$ & $0.0165 \,/\, 0.0295$ & NXT2/RCX wheel weight ($kg$) \\
+    $R$ & $0.0216 \,/\, 0.0408$ & NXT2/RCX wheel radius ($m$) \\
+    $w$ & $0.022 \,/\, 0.015$ & NXT2/RCX wheel width ($m$) \\
+    $J_w$ & $m R^2 / 2$ & wheel inertia moment ($kg \cdot m^2$) \\
+    \hline
+    $M$ & $0.55$ & body weight ($kg$) \\
+    $W$ & $0.15$ & body width ($m$) \\
+    $D$ & $0.045$ & body depth ($m$) \\
+    $H$ & $0.158$ & body height ($m$) \\
+    $L$ & $H/2$ & center of mass distance from the wheel axle ($m$) \\
+    $J_\pitch$ & $0.00805$
+                & body pitch moment of inertia ($kg \cdot m^2$) \\
+    $J_\yaw$ & $0.005$
+                    & body yaw moment of inertia ($kg \cdot m^2$) \\
+    $\pitch_0$ & $-2$ & balanced pitch deviation from upright position (deg) \\
+    \hline
+    $B$ & $0.18$ & DC motor constant ($Nm \cdot s/rad$) \\
+    $K$ & $20$ & DC motor constant ($Nm / V$) \\
+    \hline
+    $\pitch$ & & body pitch angle ($rad$) \\
+    $\roll_{l/r}$ & $\roll \mp W \yaw / (2 R)$
+                        & left/right wheel roll angles ($rad$) \\
+    $\roll$ & $(\roll_l + \roll_r)/2$ & axle midpoint roll angle ($rad$) \\
+    $\yaw$ & $R \, (\roll_r - \roll_l) / W$ & body yaw angle ($rad$) \\
+    $\vp_{l/r}$ & $[x_{l/r} \,\, y_{l/r} \,\, R]^T$
+                    & left/right wheel positions ($m$) \\
+    $\vp_m$ & $[x_m \,\, y_m \,\, R]^T$ & axle midpoint position ($m$) \\
+    $\vp_c$ & $[x_c \,\, y_c \,\, z_c]^T$ 
+                    & body center of mass position ($m$) \\
+    $v_{l/r}$ & & left/right DC motor control power (V) \\
+\end{tabular}
+\end{center}
+
+\subsection{Robot position}
+
+The position of the center of mass and its derivative can be expressed as
+\begin{equation}
+    \vp_c = \vp_m + L \left[ \begin{array}{c}
+                                \sin\pitch \cos\yaw \\
+                                \sin\pitch \sin\yaw \\
+                                \cos\pitch \\
+                             \end{array} \right]
+    \quad , \quad
+    \dot{\vp}_c = \dot{\vp}_m
+    + L \left[ \begin{array}{c}
+               \dot\pitch \cos\pitch \cos\yaw - \dot\yaw \sin\pitch \sin\yaw \\
+               \dot\pitch \cos\pitch \sin\yaw + \dot\yaw \sin\pitch \cos\yaw \\
+               - \dot\pitch \sin\pitch
+               \end{array} \right]
+    \,,
+\end{equation}
+where $\vp_m = (\vp_l + \vp_r) / 2$.
+Furthermore, if the $\yaw$ is constant and the wheels are rotating
+$\delta\roll_l$ and $\delta\roll_r$ radians in $\delta t$ seconds, then
+the wheel positions are changing by
+\begin{equation}
+    \delta \vp_l = R \, \delta\roll_l \left[ \begin{array}{c}
+                                                \cos\yaw \\
+                                                \sin\yaw \\
+                                                0 \\
+                                             \end{array} \right]
+    \quad , \quad
+    \delta \vp_r = R \, \delta\roll_r \left[ \begin{array}{c}
+                                                \cos\yaw \\
+                                                \sin\yaw \\
+                                                0 \\
+                                             \end{array} \right]
+    \,.
+\end{equation}
+As we take $\delta t \rightarrow 0$, $\yaw$ becomes constant on
+this infinitely short $\delta t$ interval, and so we obtain
+\begin{equation}
+    \dot{\vp}_l = R \, \dot\roll_l \left[ \begin{array}{c}
+                                    \cos\yaw \\
+                                    \sin\yaw \\
+                                    0 \\
+                                   \end{array} \right]
+    \quad , \quad
+    \dot{\vp}_r = R \, \dot\roll_r \left[ \begin{array}{c}
+                                    \cos\yaw \\
+                                    \sin\yaw \\
+                                    0 \\
+                                   \end{array} \right]
+    \quad , \quad
+    \dot{\vp}_m = R \, \dot\roll \left[ \begin{array}{c}
+                                    \cos\yaw \\
+                                    \sin\yaw \\
+                                    0 \\
+                                   \end{array} \right]
+    \,.
+\end{equation}
+
+\subsection{Pitch equilibrium}
+
+This model assumes that the center of mass is of the robot body is just
+above the axle at the middle when the robot is in equilibrium. In real it
+is not quite true, so one can shift the pitch angle by a constant $\pitch_0$
+and use $\pitch - \pitch_0$ in the model.
+
+But notice that moving the body center of mass also changes the body moment of 
+inertias, $J_\pitch$ and $J_\yaw$, so these quantities should be identified 
+for a fixed $\pitch_0$.
+
+\section{Motion equations}
+
+The system is divided into two subsystems: the driven segway robot
+and the driving DC motors.
+
+\subsection{Segway robot dynamics}
+
+The Lagrangian of the system (without the DC motor) is
+\begin{equation}
+    L = E_t + E_r - E_p \,,
+\end{equation}
+where $E_t$ is the translational kinetic energy, $E_r$ is the rotational 
+kinetic energy and $E_p$ is the potential energy defined as
+\begin{equation} \begin{split}
+    E_t &= \frac{m}{2} \big( \dot{x}_l^2 + \dot{y}_l^2 \big)
+         + \frac{m}{2} \big( \dot{x}_r^2 + \dot{y}_r^2 \big)
+         + \frac{M}{2} \big( \dot{x}_c^2 + \dot{y}_c^2 + \dot{z}_c^2 \big)
+        \,, \\
+    E_r &= \frac{J_w}{2} \dot{\roll}_l^2 + \frac{J_w}{2} \dot{\roll}_r^2
+         + \frac{J_\pitch}{2} \dot{\pitch}^2 + \frac{J_\yaw}{2} \dot{\yaw}^2
+        \,, \\
+    E_p &= m g R + m g R + M g z_c
+        \,.
+\end{split} \end{equation}
+Then to find the equations of motion with respect to $\pitch$, $\yaw$ and
+$\roll$, we write the Euler-Lagrange equations for the $F_\pitch$, $F_\yaw$,
+$F_\roll$ generalized forces (see appendix \ref{sec:euler-lagrange-deriv}) as
+\begin{equation} \begin{split}
+    F_\pitch &= \frac{d}{dt}\left(\frac{\partial L}{\partial\dot\pitch}\right)
+              - \frac{\partial L}{\partial\pitch}
+              = \big( M L^2 + J_\pitch \big) \ddot\pitch
+              + \big( M L R \cos\pitch \big) \ddot\roll
+              - M L^2 \dot\yaw^2 \sin\pitch \cos\pitch
+              - M g L \sin\pitch
+    \,, \\
+    F_\roll &= \frac{d}{dt}\left(\frac{\partial L}{\partial\dot\roll}\right)
+             - \frac{\partial L}{\partial\roll}
+             = \bigg( \frac{M L R}{2} \cos\pitch \bigg) \ddot\pitch
+             + \bigg( m R^2 + J_w + \frac{M R^2}{2} \bigg) \ddot\roll
+             - \frac{M L R}{2} \dot\pitch^2 \sin\pitch
+    \,, \\
+    F_\yaw &= \frac{d}{dt}\left(\frac{\partial L}{\partial\dot\yaw}\right)
+            - \frac{\partial L}{\partial\yaw}
+            = \bigg( m R^2 + J_w
+                   + \frac{2 R^2}{W^2}
+                     \big( M L^2 \sin^2\pitch + J_\yaw \big)
+              \bigg) \ddot\yaw
+            + \frac{2 M R^2 L^2}{W^2}
+              \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+    \,.
+\end{split} \end{equation}
+
+\subsection{DC motor dynamics}
+
+A detailed description of a DC motor model can be found in
+\cite{robot-modeling}. However, now we will use a simplified model, which
+captures only that the torque is damped by the shaft's rotational velocity
+and proportional to the applied power. So
+\begin{equation}
+    F_{\roll_{l/r}} = -B (\dot\roll_{l/r} - \dot\pitch)
+                       + K v_{l/r}
+    \,,
+\end{equation}
+where $B$ ($Nm \cdot rad/s$) and $K$ ($Nm / V$) are DC motor constants.
+Then we can express the generalized forces as
+\begin{equation} \begin{split}
+    F_\pitch &= -(F_{\roll_l} + F_{\roll_r})
+              = 2 B (\dot\roll - \dot\pitch) - K(v_l + v_r)
+    \,, \\
+    F_\roll &= \frac{1}{2}(F_{\roll_l} + F_{\roll_r})
+             = -B (\dot\roll - \dot\pitch) + K \frac{v_l + v_r}{2}
+    \,, \\
+    F_\yaw &= \frac{R}{W}(F_{\roll_r} - F_{\roll_l})
+            = -B \dot\yaw + \frac{R}{W} (v_r - v_l)
+    \,.
+\end{split} \end{equation}
+
+\subsection{State space form}
+
+By connecting the two subsystems and rearranging the equations, we get
+\begin{equation} \begin{split}
+\label{eq:motion-raw}
+        \Big( M L^2 + J_\psi \Big) \ddot\pitch
+      + (M L R \cos\pitch) \ddot\roll
+    &=  M L^2 \dot\yaw^2 \sin\pitch \cos\pitch
+      + M g L \sin\pitch
+      + 2 B \big( \dot\roll - \dot\pitch \big)
+      - K \big( v_l + v_r \big)
+    \,, \\
+        (M L R \cos\pitch) \ddot\pitch
+      + \Big( (2 m + M) R^2 + 2 J_w \Big) \ddot\roll
+    &=  M L R \dot\pitch^2 \sin\pitch
+      - 2 B \big( \dot\roll - \dot\pitch \big)
+      + K \big( v_l + v_r \big)
+    \,, \\
+        \Big( m R^2 W^2 + W^2 J_w
+            + 2 R^2 \big( M L^2 \sin^2\pitch + J_\yaw \big)
+        \Big) \ddot\yaw
+    &=  -2 M R^2 L^2 \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+      - B W^2 \dot\yaw + R W K \big( v_r - v_l \big)
+    \,.
+\end{split} \end{equation}
+By introducing the $\vx = [\pitch \,\, \roll \,\, \yaw \,\,
+                           \dot\pitch \,\, \dot\roll \,\, \dot\yaw \,\,
+                           x_m \,\, y_m]^T$ state
+           and the $\vv = [v_l \,\, v_r]^T$ control,
+we can write (\ref{eq:motion-raw}) into
+\begin{equation}
+    H(\vx) \, \dot{\vx} = \hf(\vx) + \hG \, \vv \,,
+\end{equation}
+where $H : \R^8 \rightarrow \R^{8 \times 8}$,
+      $\hf : \R^8 \rightarrow \R^8$,
+      $\hG \in \R^{8 \times 2}$,
+\begin{equation}
+   H(\vx)
+   = \left[ \begin{array}{cccc}
+     \I_{3 \times 3} & \Z_{3 \times 2}  & \Z_{3 \times 1}  & \Z_{3 \times 2} \\
+     \Z_{2 \times 3} & \hH(\vx)         & \Z_{2 \times 1}  & \Z_{1 \times 2} \\
+     \Z_{1 \times 3} & \Z_{1 \times 2}  & \hh(\vx)         & \Z_{1 \times 2} \\
+     \Z_{2 \times 3} & \Z_{2 \times 2}  & \Z_{2 \times 1}  & \I_{2 \times 2} \\
+     \end{array} \right]
+   \quad , \quad
+   \hf(\vx) = \left[ \begin{array}{c}
+                     \dot\pitch \\
+                     \dot\roll \\
+                     \dot\yaw \\
+                     \hf_4(\vx) \\
+                     \hf_5(\vx) \\
+                     \hf_6(\vx) \\
+                     R \, \dot\roll \cos\yaw \\
+                     R \, \dot\roll \sin\yaw \\
+                     \end{array} \right]
+    \quad , \quad
+    \hG = K \left[ \begin{array}{cc}
+                   0    & 0 \\
+                   0    & 0 \\
+                   0    & 0 \\
+                   -1   & -1 \\
+                   1    & 1 \\
+                   -R W & R W \\
+                   0    & 0 \\
+                   0    & 0 \\
+                   \end{array} \right]
+    \,,
+\end{equation}
+with
+\begin{equation} \begin{split}
+    \widehat{H}(\vx) &= \left[ \begin{array}{cc}
+                        \hH_{11} & \hH_{12}(\vx) \\
+                        \hH_{12}(\vx) & \hH_{22} \\
+                        \end{array} \right]
+    \qquad , \qquad
+    \begin{array}{r@{\,=\,}l}
+        \hH_{11} & M L^2 + J_\pitch \\
+        \hH_{12}(\vx) & M L R \cos\pitch \\
+        \hH_{22} & (2 m + M) R^2 + 2 J_w \\
+    \end{array}
+    \,, \\
+    \hh(\vx) &= m R^2 W^2 + W^2 J_w
+              + 2 R^2 \big( M L^2 \sin^2\pitch + J_\yaw \big)
+    \,, \\
+    \hf_4(\vx) &= M L^2 \dot\yaw^2 \sin\pitch \cos\pitch
+                + M g L \sin\pitch
+                + 2 B \big( \dot\roll - \dot\pitch \big)
+    \,, \\
+    \hf_5(\vx) &= M L R \dot\pitch^2 \sin\pitch
+                - 2 B \big( \dot\roll - \dot\pitch \big)
+    \,, \\
+    \hf_6(\vx) &= -2 M R^2 L^2 \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+                - B W^2 \dot\yaw
+    \,.
+\end{split} \end{equation}
+Notice that $\det\hH(\vx) > 0$ for all $\vx$ because
+\begin{equation} \begin{split}
+    \det\hH(\vx) &= \big( M L^2 + J_\psi \big)
+                    \Big( (2m + M) R^2 + 2 J_w \Big)
+                  - \big( M L R \cos\pitch \big)^2
+                 \\
+                 &> M^2 L^2 R^2
+                  - M^2 L^2 R^2 \cos^2\pitch
+                  = M^2 L^2 R^2 \big( 1 - \cos^2\pitch \big)
+                  \ge 0
+                  \,.
+\end{split} \end{equation}
+Furthermore, for all $\vx$, we have $\hh(\vx) > 0$ and so $\det H(\vx) > 0$.
+Hence, $\exists H(\vx)^{-1}$ for all $\vx$, and the state space form becomes
+\begin{equation}
+    \dot{\vx} = H(\vx)^{-1} \Big(\hf(\vx) + \hG \, \vv\Big)
+              = H(\vx)^{-1} \hf(\vx) + H(\vx)^{-1} \hG \, \vv
+              = f(\vx) + G(\vx) \, \vv
+              \,,
+\end{equation}
+where
+\begin{equation}
+    f(\vx) = \left[ \begin{array}{c}
+                    \dot\pitch \\
+                    \dot\roll \\
+                    \dot\yaw \\
+                    f_4(\vx) \\
+                    f_5(\vx) \\
+                    f_6(\vx) \\
+                    R \dot\roll \cos\yaw \\
+                    R \dot\roll \sin\yaw \\
+                    \end{array} \right]
+    \qquad , \qquad
+    G(\vx) = \left[ \begin{array}{cc}
+                    0 & 0 \\
+                    0 & 0 \\
+                    0 & 0 \\
+                    g_4(\vx) & g_4(\vx) \\
+                    g_5(\vx) & g_5(\vx) \\
+                    -g_6(\vx) & g_6(\vx) \\
+                    0 & 0 \\
+                    0 & 0 \\
+                    \end{array} \right]
+    \,,
+\end{equation}
+with
+\begin{equation} \begin{aligned}
+    f_4(\vx) &= \frac{\hH_{22}\hf_4(\vx) - \hH_{12}(\vx)\hf_5(\vx)}
+                     {\hH_{11}\hH_{22} - \hH_{12}(\vx)^2}
+    \quad &, \quad
+    g_4(\vx) &= \frac{-K\big(\hH_{22} + \hH_{12}(\vx)\big)}
+                     {\hH_{11}\hH_{22} - \hH_{12}(\vx)^2}
+    \,, \\
+    f_5(\vx) &= \frac{-\hH_{12}(\vx)\hf_4(\vx) + \hH_{11}\hf_5(\vx)}
+                     {\hH_{11}\hH_{22} - \hH_{12}(\vx)^2}
+    \quad &, \quad
+    g_5(\vx) &= \frac{K\big(\hH_{12}(\vx) + \hH_{11}\big)}
+                     {\hH_{11}\hH_{22} - \hH_{12}(\vx)^2}
+    \,, \\
+    f_6(\vx) &= \frac{\hf_6(\vx)}
+                     {\hh(\vx)}
+    \quad &, \quad
+    g_6(\vx) &= \frac{K R W}{\hh(\vx)}
+    \,.
+\end{aligned} \end{equation}
+
+\appendix
+
+\section{Derivation of the Euler-Lagrange equations}
+\label{sec:euler-lagrange-deriv}
+
+Notice that
+\begin{equation} \begin{split}
+\label{eq:dot-xy}
+    \dot{x}_c \cos\yaw + \dot{y}_c \sin\yaw
+        &= \dot{x}_m \cos\yaw + \dot{y}_m \sin\yaw
+         + L \dot\pitch \cos\pitch \big( \cos^2\yaw + \sin^2\yaw \big)
+         = R \dot\roll + L \dot\pitch \cos\pitch
+    \,, \\
+    \dot{x}_c \sin\yaw - \dot{y}_c \cos\yaw
+        &= \dot{x}_m \sin\yaw - \dot{y}_m \cos\yaw
+         - L \dot\yaw \sin\pitch \big( \sin^2\yaw + \cos^2\yaw \big)
+         = - L \dot\yaw \sin\pitch
+    \,.
+\end{split} \end{equation}
+Then
+\begin{equation} \begin{split}
+    F_\pitch
+    &= \frac{d}{dt} \left( \frac{\partial L}{\partial \dot\pitch} \right)
+     - \frac{\partial L}{\partial \pitch}
+    \\
+    &= \frac{d}{dt} \Big( M L \big( \dot{x}_c \cos\pitch \cos\yaw
+                                  + \dot{y}_c \cos\pitch \sin\yaw
+                                  - \dot{z}_c \sin\pitch
+                              \big)
+                        + J_\pitch \dot\pitch
+                    \Big)
+    \\ &\quad + M L \Big( \dot{x}_c \big( \dot\pitch \sin\pitch \cos\yaw
+                                        + \dot\yaw \cos\pitch \sin\yaw
+                                    \big)
+                        + \dot{y}_c \big( \dot\pitch \sin\pitch \sin\yaw
+                                        - \dot\yaw \cos\pitch \cos\yaw
+                                    \big)
+                        + \dot{z}_c \dot\pitch \cos\pitch
+                        - g \sin\pitch
+                    \Big)
+    \\
+    &= \frac{d}{dt} \Big( M L \cos\pitch \big( \dot{x}_c \cos\yaw
+                                             + \dot{y}_c \sin\yaw
+                                         \big)
+                        + M L^2 \dot\pitch \sin^2\pitch
+                        + J_\pitch \dot\pitch
+                    \Big)
+    \\ &\quad + M L \Big( \dot\pitch \sin\pitch \big( \dot{x}_c \cos\yaw
+                                                    + \dot{y}_c \sin\yaw
+                                                \big)
+                        + \dot\yaw \cos\pitch \big( \dot{x}_c \sin\yaw
+                                                  - \dot{y}_c \cos\yaw
+                                              \big)
+                        - L \, \dot\pitch^2 \sin\pitch \cos\pitch
+                        - g \sin\pitch
+                    \Big)
+    \\
+    &\hspace{-1.5mm} \stackrel{(\ref{eq:dot-xy})}{=}
+        \frac{d}{dt} \Big( M L R \, \dot\roll \cos\pitch
+                         + M L^2 \, \dot\pitch
+                         + J_\pitch \dot\pitch
+                     \Big)
+    \\ &\quad + M L \big( R \, \dot\roll \, \dot\pitch \sin\pitch
+                        + L \, \dot\pitch^2 \sin\pitch \cos\pitch
+                        - L \, \dot\yaw^2 \cos\pitch \sin\pitch
+                        - L \, \dot\pitch^2 \sin\pitch \cos\pitch
+                        - g \sin\pitch
+                    \big)
+    \\
+    &= M L R \, \ddot\roll \cos\pitch
+     - M L R \, \dot\roll \, \dot\pitch \sin\pitch
+     + \big( M L^2 + J_\pitch \big) \ddot\pitch
+     + M L \big( R \, \dot\roll \, \dot\pitch \sin\pitch
+               - L \, \dot\yaw^2 \sin\pitch \cos\pitch
+               - g \sin\pitch
+           \big)
+    \\
+    &= \big( M L^2 + J_\pitch \big) \ddot\pitch
+     + \big( M L R \cos\pitch \big) \ddot\roll
+     - M L^2 \, \dot\yaw^2 \sin\pitch \cos\pitch
+     - M g L \sin\pitch
+    \,.
+\end{split} \end{equation}
+Furthermore, notice that $\partial\yaw / \partial\roll_{l/r} = \mp R/W$ and
+\begin{equation} \begin{split}
+\label{eq:xy-lr}
+    \dot{x}_{l/r} \cos\yaw + \dot{y}_{l/r} \sin\yaw
+        &= R \, \dot\roll_{l/r} \cos^2\yaw + R \, \dot\roll_{l/r} \sin^2\yaw
+         = R \, \dot\roll_{l/r}
+    \,, \\
+    \dot{x}_{l/r} \sin\yaw - \dot{y}_{l/r} \cos\yaw
+        &= R \, \dot\roll_{l/r} \cos\yaw \sin\yaw
+         - R \, \dot\roll_{l/r} \sin\yaw \cos\yaw
+         = 0
+    \,, \\
+    \dot{x}_c \cos\yaw + \dot{y}_c \sin\yaw
+        &= R \, \dot\roll \cos^2\yaw 
+         + L \big( \dot\pitch \cos\pitch \cos^2\yaw
+                 - \dot\yaw \sin\pitch \sin\yaw \cos\yaw
+             \big)
+        \\ &\quad
+         + R \, \dot\roll \sin^2\yaw 
+         + L \big( \dot\pitch \cos\pitch \sin^2\yaw
+                 + \dot\yaw \sin\pitch \cos\yaw \sin\yaw
+             \big)
+         = R \, \dot\roll + L \dot\pitch \cos\pitch
+    \,, \\
+    \dot{x}_c \sin\yaw - \dot{y}_c \cos\yaw
+        &= R \, \dot\roll \cos\yaw \sin\yaw
+         + L \big( \dot\pitch \cos\pitch \cos\yaw \sin\yaw
+                 - \dot\yaw \sin\pitch \sin^2\yaw
+             \big)
+        \\ &\quad
+         - R \, \dot\roll \sin\yaw \cos\yaw
+         - L \big( \dot\pitch \cos\pitch \sin\yaw \cos\yaw
+                 + \dot\yaw \sin\pitch \cos^2\yaw
+             \big)
+         = - L \dot\yaw \sin\pitch
+    \,.
+\end{split} \end{equation}
+Then the forces of the left/right axle endpoints can be expressed as
+\begin{equation} \begin{split}
+    F_{\roll_{l/r}}
+    &= \frac{d}{dt} \left( \frac{\partial L}{\partial \dot\roll_{l/r}} \right)
+     - \frac{\partial L}{\partial \roll_{l/r}}
+    \\
+    &= \frac{d}{dt} \bigg( m R \big( \dot{x}_{l/r} \cos\yaw
+                                   + \dot{y}_{l/r} \sin\yaw
+                               \big)
+    \\ &\hspace{2cm}
+                         + \frac{M R}{2}
+                           \Big[ \dot{x}_c
+                                 \Big( \cos\yaw
+                                   \pm \frac{2 L}{W} \sin\pitch \sin\yaw
+                                 \Big)
+                               + \dot{y}_c
+                                 \Big( \sin\yaw
+                                   \mp \frac{2 L}{W} \sin\pitch \cos\yaw
+                                 \Big)
+                           \Big]
+                          + J_w \dot\roll_{l/r}
+                          \mp \frac{R}{W} J_\yaw \dot\yaw
+                      \bigg)
+    \\ &\quad \mp \frac{m R^2}{W} \big( \dot{x}_l \dot\roll_l \sin\yaw
+                                      - \dot{y}_l \dot\roll_l \cos\yaw
+                                      + \dot{x}_r \dot\roll_r \sin\yaw
+                                      - \dot{x}_r \dot\roll_r \cos\yaw
+                                \big)
+    \\ &\quad \mp \frac{M R}{W}
+                  \Big( \dot{x}_c \big[ R \, \dot\roll \sin\yaw
+                                      + L \big( \dot\pitch \cos\pitch \sin\yaw
+                                              + \dot\yaw \sin\pitch \cos\yaw
+                                          \big)
+                                  \big]
+    \\ &\hspace{6cm}
+                      + \dot{y}_c \big[ - R \, \dot\roll \cos\yaw
+                                      + L \big( -\dot\pitch \cos\pitch \cos\yaw
+                                              + \dot\yaw \sin\pitch \sin\yaw        
+                                          \big)
+                                  \big]
+                  \Big)
+    \\
+    &\hspace{-1.5mm} \stackrel{(\ref{eq:xy-lr})}{=}
+        \frac{d}{dt} \bigg( m R^2 \dot\roll_l
+                          + \frac{M R}{2} \big( R \, \dot\roll
+                                              + L \dot\pitch \cos\pitch
+                                          \big)
+                          \mp \frac{M R L^2}{W} \dot\yaw \sin^2\pitch
+                          + J_w \dot\roll_{l/r}
+                          \mp \frac{R}{W} J_\yaw \dot\yaw
+                     \bigg)
+    \\ &\quad \mp 0
+              \mp \frac{M R}{W} \Big( R \dot\roll
+                                    + L \dot\pitch \cos\pitch
+                                \Big)
+                                \big( - L \dot\yaw \sin\pitch \big)
+              \pm \frac{M R L}{W} \dot\yaw \sin\pitch
+                                  \big( R \, \dot\roll
+                                      + L \dot\pitch \cos\pitch \big)
+    \\
+    &= m R^2 \ddot\roll_{l/r}
+     + \frac{M R}{2} \big( R \, \ddot\roll
+                         + L \ddot\pitch \cos\pitch
+                         - L \dot\pitch^2 \sin\pitch
+                     \big)
+     \mp \frac{M R L^2}{W} \big( \ddot\yaw \sin^2\pitch
+                               + 2 \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+                           \big)
+     \\ &\hspace{12cm}
+     + J_w \ddot\roll_{l/r}
+     \mp \frac{R}{W} J_\yaw \ddot\yaw
+     \\
+     &= \Big( m R^2 + J_w \Big) \ddot\roll_{l/r}
+      + \frac{M R^2}{2} \ddot\roll
+      + \bigg( \frac{M R L}{2} \cos\pitch \bigg) \ddot\pitch
+      - \frac{M R L}{2} \dot\pitch^2 \sin\pitch
+     \\ &\hspace{6cm}
+      \mp \frac{R}{W}
+          \bigg( M L^2 \sin^2\pitch + J_\yaw \bigg) \ddot\yaw
+      \mp \frac{2 M R L^2}{W} \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+     \,.
+\end{split} \end{equation}
+By using $F_{\roll_l}$ and $F_{\roll_r}$, we can compute
+the $F_\roll$, $F_\yaw$ generalized forces as
+\begin{equation} \begin{split}
+    F_\roll &= F_{\roll_l} \frac{\partial \roll}{\partial \roll_l}
+             + F_{\roll_r} \frac{\partial \roll}{\partial \roll_r}
+             = \frac{F_{\roll_l} + F_{\roll_r}}{2}
+            \\
+            &= \left( m R^2 + J_w + \frac{M R^2}{2} \right) \ddot\roll
+             + \left( \frac{M L R}{2} \cos\pitch \right) \ddot\pitch
+             - \frac{M L R}{2} \dot\pitch^2 \sin\pitch
+    \,, \\
+    F_\yaw &= F_{\roll_l} \frac{\partial \yaw}{\partial \roll_l}
+            + F_{\roll_r} \frac{\partial \yaw}{\partial \roll_r}
+            = \frac{R}{W} \Big( F_{\roll_r} - F_{\roll_r} \Big)
+           \\
+           &= \bigg( m R^2 + J_w
+                   + \frac{2 R^2}{W^2}
+                     \big( M L^2 \sin^2\pitch + J_\yaw \big)
+              \bigg) \ddot\yaw
+            + \frac{2 M R^2 L^2}{W^2}
+              \dot\yaw \dot\pitch \sin\pitch \cos\pitch
+    \,.
+\end{split} \end{equation}
+
+\begin{thebibliography}{99}
+
+\bibitem{nxtway-gs}
+    Yorihisa Yamamoto \\
+    \textsl{NXTway-GS (Self-Balancing Two-Wheeled Robot) Controller Design} \\
+    \href{http://www.mathworks.com/matlabcentral/fileexchange/19147}
+         {http://www.mathworks.com/matlabcentral/fileexchange/19147}
+
+\bibitem{nxt-motor-philo}
+    Philippe E. Hurbain \\
+    \textsl{NXT Motor Internals} \\
+    \href{http://www.philohome.com/nxtmotor/nxtmotor.htm}
+         {http://www.philohome.com/nxtmotor/nxtmotor.htm}
+
+\if0
+\bibitem{nxt-motor}
+    Ryo Watanabe \\
+    \textsl{NXT Motor} \\
+    \href{http://web.mac.com/ryo_watanabe/iWeb/Ryo%27s%20Holiday/NXT%20Motor.html}
+         {http://web.mac.com/ryo\_watanabe/iWeb/Ryo\%27s\%20Holiday/NXT\%20Motor.html}
+\fi
+
+\bibitem{robot-modeling}
+    Mark W. Spong, Seth Hutchinson, M. Vidyasagar \\
+    \textsl{Robot Modeling and Control} \\
+    John Wiley \& Sons, 2005
+
+\end{thebibliography}
+
+\end{document}
+

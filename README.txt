@@ -1,0 +1,58 @@
+
+Using a non-default java:
+
+    Just simply set the JAVA_HOME variable.
+
+    Using bash:
+    
+        export JAVA_HOME=/.../jdk<version>
+        export PATH=$JAVA_HOME/bin:$PATH
+
+Tested with the following libraries and java versions:
+
+    LWJGL 2.9.1 (http://legacy.lwjgl.org/)
+
+    http://icedtea.classpath.org
+
+        OpenJDK Runtime Environment (IcedTea6 1.13.3) (Gentoo build 1.6.0_31-b31)
+        OpenJDK 64-Bit Server VM (build 23.25-b01, mixed mode)
+
+    http://www.oracle.com/java
+
+        Java(TM) SE Runtime Environment (build 1.7.0_67-b01)
+        Java HotSpot(TM) 64-Bit Server VM (build 24.65-b04, mixed mode)
+
+        Java(TM) SE Runtime Environment (build 1.8.0_11-b12)
+        Java HotSpot(TM) 64-Bit Server VM (build 25.11-b03, mixed mode)
+
+Compiling the source:
+
+    Download and unzip lwjgl-2.9.1.zip in the lib directory.
+    Then issue:
+
+    ant compile
+
+Running the code:
+
+    remote control without localization:
+
+        ant drive
+
+    remote control with localization:
+
+        ant localize
+
+    keys and mouse control:
+
+        space              : run/pause
+        left/right/up/down : drive the segway
+        escape             : exit
+        
+        left click + move mouse   : rotate around view center
+        middle click + move mouse : zoom in/out
+        right click + move mouse  : translate view center position
+
+Cleaning the source (delete binaries):
+
+    ant clean
+
