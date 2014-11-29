@@ -1,7 +1,7 @@
 package model.motion;
 
 import vecmat.Vector;
-import ode.CachedODE;
+import helper.CachedODE;
 import ode.ODESolver;
 import ode.RK4;
 

@@ -16,6 +16,10 @@
         <javac srcdir="${src}/vecmat" destdir="${bin}"/>
     </target>
 
+    <target name="ode" description="Compile the ode package.">
+        <javac srcdir="${src}/ode" destdir="${bin}"/>
+    </target>
+
     <target name="geom2d" description="Compile the geom2d package.">
         <javac srcdir="${src}/geom2d" destdir="${bin}"/>
     </target>
@@ -25,7 +29,7 @@
     </target>
 
     <target name="segway-share" description="Compile the segway-share package."
-        depends="vecmat,geom2d,geom3d">
+        depends="vecmat,ode,geom2d,geom3d">
         <mkdir dir="${bin}/segway-share"/>
         <javac srcdir="${src}/segway-share" destdir="${bin}/segway-share">
             <classpath>
@@ -55,6 +59,7 @@
 
     <target name="clean" description="Delete class files.">
         <delete dir="${bin}/vecmat"/>
+        <delete dir="${bin}/ode"/>
         <delete dir="${bin}/geom2d"/>
         <delete dir="${bin}/geom3d"/>
         <delete dir="${bin}/segway-share"/>

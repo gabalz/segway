@@ -1,6 +1,6 @@
-package ode;
+package helper;
 
-import helper.VectorCache;
+import ode.ODE;
 import vecmat.Vector;
 
 /**

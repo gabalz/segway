@@ -3,14 +3,13 @@ package control;
 import java.awt.event.KeyEvent;
 
 import vecmat.Vector;
-import ode.CachedODE;
+import helper.CachedODE;
 import ode.Euler;
 import ode.ODESolver;
 import run.Robot;
 import run.ThreadLogic;
 
 import comm.CommunicatorLogic;
-
 import control.RobotController;
 
 /**

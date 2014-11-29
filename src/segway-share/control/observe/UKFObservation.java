@@ -1,12 +1,10 @@
 package control.observe;
 
 import helper.Ratio;
-
+import helper.CachedODE;
 import java.io.IOException;
-
 import vecmat.Matrix;
 import vecmat.Vector;
-import ode.CachedODE;
 import ode.ODESolver;
 import ode.RK4;
 import control.RobotController;

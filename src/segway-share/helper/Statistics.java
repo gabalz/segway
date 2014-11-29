@@ -1,7 +1,6 @@
 package helper;
 
 import java.util.Random;
-
 import vecmat.Vector;
 
 /**
