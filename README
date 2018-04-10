@@ -1,7 +1,7 @@
 
 A robot segway simulator with OpenGL visualization.
 
-Project home : http://webdocs.cs.ualberta.ca/~gbalazs/segway.html
+Project home : https://gabalz.github.io/segway.html
 Source code  : https://github.com/gabalz/segway
 
 In the simulator, one can control a robot segway on a flat terrain.
