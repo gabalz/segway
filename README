@@ -1,3 +1,8 @@
+This project is deprecated, to bring it back to life it needs:
+- update to some code changes in the jmatrix library
+- major update from the LWJGL 2 library to the current one
+
+-------------------------------------------------------------------------------
 
 A robot segway simulator with OpenGL visualization.
 
